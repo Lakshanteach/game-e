@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Tic-Tac-Toe</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}
+html,body{margin:0;height:100%;background:#0b1020;color:#fff;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow:hidden;touch-action:none}
+#app{height:100%;max-width:480px;margin:0 auto;display:flex;flex-direction:column;align-items:center;padding:12px}
+.top{width:100%;display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:8px}
+.title{font-weight:700;font-size:17px}
+.chips{display:flex;gap:6px}
+.chip{background:#1a2342;border-radius:12px;padding:5px 12px;font-size:11px;text-align:center;min-width:64px;letter-spacing:1px;opacity:.95}
+.chip b{display:block;font-size:18px;letter-spacing:0}
+.stage{flex:1;width:100%;display:flex;align-items:center;justify-content:center;min-height:0;flex-direction:column}
+.hint{margin-top:8px;font-size:13px;opacity:.65;text-align:center}
+.btn{background:#3b82f6;color:#fff;border:0;border-radius:12px;padding:10px 18px;font-size:15px;font-weight:600}
+.board{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;width:100%;max-width:320px}
+.cell{aspect-ratio:1;border:0;border-radius:16px;background:#1a2342;color:#fff;font-size:56px;font-weight:700}
+.cell.x{color:#5aa9ff}.cell.o{color:#ff6b81}.cell.w{background:#27406e}
+#msg{margin-top:14px;min-height:28px;font-size:18px;font-weight:700}
+</style></head><body>
+<div id="app">
+<div class="top"><div class="title">❌ Tic-Tac-Toe</div><div class="chips"><div class="chip">STREAK<b id="sc">0</b></div><div class="chip">BEST<b id="bs">0</b></div></div></div>
+<div class="stage"><div class="board" id="bd"></div><div id="msg"></div><button class="btn" id="re" style="margin-top:10px">New round</button></div>
+<div class="hint">You are X. Beat the bot to build a win streak</div>
+</div>
+<script>
+var KEY="shadow-game-ttt";
+function $(s){return document.querySelector(s)}
+var Best={get:function(){try{return +localStorage.getItem(KEY)||0}catch(e){return 0}},set:function(v){try{localStorage.setItem(KEY,v)}catch(e){}}};
+var best=Best.get();$("#bs").textContent=best||0;
+function setScore(v){$("#sc").textContent=v}
+function submit(v){if(v>best){best=v;Best.set(v);$("#bs").textContent=v}}
+var L=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]],b,done,streak=0,cells=[];
+function win(bd){for(var i=0;i<L.length;i++){var l=L[i];if(bd[l[0]]&&bd[l[0]]===bd[l[1]]&&bd[l[0]]===bd[l[2]])return{w:bd[l[0]],l:l}}return bd.every(function(v){return v})?{w:"D"}:null}
+function mm(bd,p){
+  var r=win(bd);if(r){return{s:r.w==="O"?1:r.w==="X"?-1:0}}
+  var bst=null;
+  for(var i=0;i<9;i++){if(bd[i])continue;bd[i]=p;var s=mm(bd,p==="O"?"X":"O").s;bd[i]="";
+    if(bst===null||(p==="O"?s>bst.s:s<bst.s))bst={s:s,i:i}}
+  return bst;
+}
+function render(){cells.forEach(function(c,i){c.textContent=b[i];c.className="cell "+(b[i]==="X"?"x":b[i]==="O"?"o":"")})}
+function init(){
+  b=["","","","","","","","",""];done=false;$("#msg").textContent="";
+  var bd=$("#bd");if(!cells.length){for(var i=0;i<9;i++){(function(i){var c=document.createElement("button");c.addEventListener("click",function(){human(i)});bd.appendChild(c);cells.push(c)})(i)}}
+  render();
+}
+function finish(r){
+  done=true;
+  if(r.l)r.l.forEach(function(i){cells[i].className+=" w"});
+  if(r.w==="X"){streak++;setScore(streak);submit(streak);$("#msg").textContent="🎉 You win!"}
+  else if(r.w==="O"){streak=0;setScore(0);$("#msg").textContent="🤖 Bot wins"}
+  else $("#msg").textContent="🤝 Draw";
+}
+function human(i){
+  if(done||b[i])return;
+  b[i]="X";render();var r=win(b);if(r){finish(r);return}
+  setTimeout(function(){
+    var free=[];for(var k=0;k<9;k++)if(!b[k])free.push(k);
+    var m=Math.random()<0.3?free[Math.random()*free.length|0]:mm(b.slice(),"O").i;
+    b[m]="O";render();var r2=win(b);if(r2)finish(r2);
+  },350);
+}
+$("#re").addEventListener("click",init);
+init();
+</script></body></html>

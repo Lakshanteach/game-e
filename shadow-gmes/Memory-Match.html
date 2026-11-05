@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Memory Match</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}
+html,body{margin:0;height:100%;background:#0b1020;color:#fff;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow:hidden;touch-action:none}
+#app{height:100%;max-width:480px;margin:0 auto;display:flex;flex-direction:column;align-items:center;padding:12px}
+.top{width:100%;display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:8px}
+.title{font-weight:700;font-size:17px}
+.chips{display:flex;gap:6px}
+.chip{background:#1a2342;border-radius:12px;padding:5px 12px;font-size:11px;text-align:center;min-width:64px;letter-spacing:1px;opacity:.95}
+.chip b{display:block;font-size:18px;letter-spacing:0}
+.stage{flex:1;width:100%;display:flex;align-items:center;justify-content:center;min-height:0;flex-direction:column}
+.hint{margin-top:8px;font-size:13px;opacity:.65;text-align:center}
+.btn{background:#3b82f6;color:#fff;border:0;border-radius:12px;padding:10px 18px;font-size:15px;font-weight:600}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;width:100%;max-width:340px}
+.card{aspect-ratio:1;border:0;border-radius:14px;background:#2a3566;color:#fff;font-size:34px;display:flex;align-items:center;justify-content:center;transition:transform .15s}
+.card .f{display:none}.card.open,.card.done{background:#fff}.card.open .f,.card.done .f{display:block}.card.open .bk,.card.done .bk{display:none}.card.done{background:#9be7a6}
+#msg{margin-top:14px;min-height:28px;font-size:18px;font-weight:700}
+</style></head><body>
+<div id="app">
+<div class="top"><div class="title">🧠 Memory Match</div><div class="chips"><div class="chip">MOVES<b id="sc">0</b></div><div class="chip">BEST<b id="bs">0</b></div></div></div>
+<div class="stage"><div class="grid" id="grid"></div><div id="msg"></div><button class="btn" id="re" style="margin-top:10px">New game</button></div>
+<div class="hint">Match all the pairs with the fewest moves</div>
+</div>
+<script>
+var KEY="shadow-game-memory";
+function $(s){return document.querySelector(s)}
+var Best={get:function(){try{return +localStorage.getItem(KEY)||0}catch(e){return 0}},set:function(v){try{localStorage.setItem(KEY,v)}catch(e){}}};
+var best=Best.get();$("#bs").textContent=best||"-";
+function setScore(v){$("#sc").textContent=v}
+var EM=["🐶","🐱","🦊","🐼","🐸","🦁","🐵","🐙"],first=null,lock=false,moves=0,pairs=0;
+function build(){
+  var a=EM.concat(EM);for(var i=a.length-1;i>0;i--){var j=Math.random()*(i+1)|0;var t=a[i];a[i]=a[j];a[j]=t}
+  var g=$("#grid");g.innerHTML="";first=null;lock=false;moves=0;pairs=0;setScore(0);$("#msg").textContent="";
+  a.forEach(function(e){var b=document.createElement("button");b.className="card";b.dataset.e=e;b.innerHTML='<span class="f">'+e+'</span><span class="bk">?</span>';b.addEventListener("click",function(){flip(b)});g.appendChild(b)});
+}
+function flip(b){
+  if(lock||b.classList.contains("open")||b.classList.contains("done"))return;
+  b.classList.add("open");
+  if(!first){first=b;return}
+  moves++;setScore(moves);
+  if(first.dataset.e===b.dataset.e){
+    first.className=b.className="card done";first=null;pairs++;
+    if(pairs===EM.length){
+      $("#msg").textContent="🎉 You won in "+moves+" moves!";
+      if(!best||moves<best){best=moves;Best.set(best);$("#bs").textContent=best}
+    }
+  }else{
+    lock=true;var f=first;first=null;
+    setTimeout(function(){f.classList.remove("open");b.classList.remove("open");lock=false},700);
+  }
+}
+$("#re").addEventListener("click",build);
+build();
+</script></body></html>
